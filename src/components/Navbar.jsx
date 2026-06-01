@@ -6,6 +6,7 @@ import { auth } from "../firebase";
 export default function Navbar() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,21 +36,42 @@ export default function Navbar() {
         {!loading && (
           <>
             {user ? (
-              <div className="flex items-center gap-3">
-                <Link to="/dashboard" className="text-gray-600 hover:text-blue-600 text-sm">
-                  Dashboard
-                </Link>
-                <div className="flex items-center gap-2 bg-gray-50 border rounded-lg px-3 py-2">
+              <div className="relative">
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  className="flex items-center gap-2 bg-gray-50 border rounded-lg px-3 py-2"
+                >
                   <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
                     {user.email[0].toUpperCase()}
                   </div>
-                  <span className="text-sm text-gray-700 hidden md:block">
-                    {user.email}
-                  </span>
-                  <button onClick={logout} className="text-sm text-red-500 hover:text-red-700 ml-1">
-                    Logout
-                  </button>
-                </div>
+                  <span className="text-sm text-gray-700 hidden md:block">{user.email}</span>
+                  <span className="text-gray-400 text-xs">▼</span>
+                </button>
+
+                {menuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border rounded-xl shadow-lg z-50">
+                    <Link
+                      to="/dashboard"
+                      onClick={() => setMenuOpen(false)}
+                      className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-t-xl"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      to="/profile"
+                      onClick={() => setMenuOpen(false)}
+                      className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      My Reviews
+                    </Link>
+                    <button
+                      onClick={logout}
+                      className="block w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-gray-50 rounded-b-xl"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center gap-3">
