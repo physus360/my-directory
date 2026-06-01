@@ -80,11 +80,7 @@ export default function BusinessProfile() {
     const url = window.location.href;
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: business.name,
-          text: `Check out ${business.name} on BizDirectory`,
-          url,
-        });
+        await navigator.share({ title: business.name, text: `Check out ${business.name} on BizDirectory`, url });
       } catch {}
     } else {
       navigator.clipboard.writeText(url);
@@ -114,6 +110,9 @@ export default function BusinessProfile() {
   if (!business) return <div className="min-h-screen flex items-center justify-center text-gray-400 text-xl">Business not found</div>;
 
   const stars = Math.round(business.avgRating || 0);
+  const mapsUrl = business.address
+    ? `https://maps.google.com/maps?q=${encodeURIComponent(business.address)}&output=embed`
+    : null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -131,11 +130,8 @@ export default function BusinessProfile() {
             <h1 className="text-3xl font-bold text-gray-800">{business.name}</h1>
             <div className="flex items-center gap-2">
               <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-sm">{business.category}</span>
-              <button
-                onClick={shareBusiness}
-                className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-gray-600 transition"
-              >
-                {copied ? "✅ Copied!" : "🔗 Share"}
+              <button onClick={shareBusiness} className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-gray-600 transition">
+                {copied ? "Copied!" : "Share"}
               </button>
             </div>
           </div>
@@ -149,6 +145,13 @@ export default function BusinessProfile() {
 
           <p className="text-gray-600 mb-6">{business.description}</p>
 
+          {business.address && (
+            <div className="flex items-center gap-2 text-gray-600 mb-4 text-sm">
+              <span>📍</span>
+              <span>{business.address}</span>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             {business.phone && (
               <a href={`tel:${business.phone}`} className="flex items-center gap-2 bg-gray-50 rounded-lg p-3 hover:bg-gray-100">
@@ -160,10 +163,7 @@ export default function BusinessProfile() {
               </a>
             )}
             {business.email && (
-              <button
-                onClick={() => setShowContact(!showContact)}
-                className="flex items-center gap-2 bg-gray-50 rounded-lg p-3 hover:bg-gray-100 text-left"
-              >
+              <button onClick={() => setShowContact(!showContact)} className="flex items-center gap-2 bg-gray-50 rounded-lg p-3 hover:bg-gray-100 text-left">
                 <span className="text-xl">✉️</span>
                 <div>
                   <div className="text-xs text-gray-400">Email</div>
@@ -192,40 +192,34 @@ export default function BusinessProfile() {
               ) : (
                 <form onSubmit={submitContact} className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
-                    <input
-                      className="border rounded-lg px-3 py-2 text-sm"
-                      placeholder="Your name"
-                      value={contactForm.name}
-                      onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                      required
-                    />
-                    <input
-                      type="email"
-                      className="border rounded-lg px-3 py-2 text-sm"
-                      placeholder="Your email"
-                      value={contactForm.email}
-                      onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                      required
-                    />
+                    <input className="border rounded-lg px-3 py-2 text-sm" placeholder="Your name" value={contactForm.name} onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })} required />
+                    <input type="email" className="border rounded-lg px-3 py-2 text-sm" placeholder="Your email" value={contactForm.email} onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })} required />
                   </div>
-                  <textarea
-                    className="w-full border rounded-lg px-3 py-2 h-24 resize-none text-sm"
-                    placeholder="Your message..."
-                    value={contactForm.message}
-                    onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-blue-700"
-                  >
-                    Send Message
-                  </button>
+                  <textarea className="w-full border rounded-lg px-3 py-2 h-24 resize-none text-sm" placeholder="Your message..." value={contactForm.message} onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })} required />
+                  <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-blue-700">Send Message</button>
                 </form>
               )}
             </div>
           )}
         </div>
+
+        {mapsUrl && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Location</h2>
+            <div className="rounded-xl overflow-hidden h-64">
+              <iframe
+                title="Business Location"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                src={mapsUrl}
+                allowFullScreen
+                loading="lazy"
+              />
+            </div>
+            <p className="text-sm text-gray-500 mt-2">📍 {business.address}</p>
+          </div>
+        )}
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Leave a Review</h2>
@@ -243,33 +237,15 @@ export default function BusinessProfile() {
                 <div className="text-sm font-medium text-gray-700 mb-2">Your Rating</div>
                 <div className="flex gap-1">
                   {[1,2,3,4,5].map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setRating(s)}
-                      onMouseEnter={() => setHover(s)}
-                      onMouseLeave={() => setHover(0)}
-                      className={`text-3xl transition ${s <= (hover || rating) ? "text-yellow-400" : "text-gray-200"}`}
-                    >
-                      ★
-                    </button>
+                    <button key={s} type="button" onClick={() => setRating(s)} onMouseEnter={() => setHover(s)} onMouseLeave={() => setHover(0)} className={`text-3xl transition ${s <= (hover || rating) ? "text-yellow-400" : "text-gray-200"}`}>★</button>
                   ))}
                 </div>
               </div>
               <div>
                 <div className="text-sm font-medium text-gray-700 mb-1">Comment (optional)</div>
-                <textarea
-                  className="w-full border rounded-lg px-3 py-2 h-24 resize-none"
-                  placeholder="Share your experience..."
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                />
+                <textarea className="w-full border rounded-lg px-3 py-2 h-24 resize-none" placeholder="Share your experience..." value={comment} onChange={(e) => setComment(e.target.value)} />
               </div>
-              <button
-                type="submit"
-                disabled={submitting || !rating}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-              >
+              <button type="submit" disabled={submitting || !rating} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
                 {submitting ? "Submitting..." : "Submit Review"}
               </button>
             </form>
