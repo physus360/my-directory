@@ -27,12 +27,10 @@ export default function Navbar() {
       <Link to="/" className="text-2xl font-bold text-blue-600">
         BizDirectory
       </Link>
-
       <div className="flex items-center gap-4">
         <Link to="/browse" className="text-gray-600 hover:text-blue-600">
           Browse
         </Link>
-
         {!loading && (
           <>
             {user ? (
@@ -45,9 +43,8 @@ export default function Navbar() {
                     {user.email[0].toUpperCase()}
                   </div>
                   <span className="text-sm text-gray-700 hidden md:block">{user.email}</span>
-                  <span className="text-gray-400 text-xs">▼</span>
+                  <span className="text-gray-400 text-xs">v</span>
                 </button>
-
                 {menuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white border rounded-xl shadow-lg z-50">
                     <Link
