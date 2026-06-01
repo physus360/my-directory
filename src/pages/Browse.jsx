@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import BusinessCard from "../components/BusinessCard";
@@ -17,9 +17,7 @@ export default function Browse() {
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [activeCategory, setActiveCategory] = useState(searchParams.get("category") || "All");
   const [sortBy, setSortBy] = useState("rating");
-  const navigate = useNavigate();
 
-  // load all businesses once
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -30,7 +28,6 @@ export default function Browse() {
     load();
   }, []);
 
-  // filter and sort whenever search/category/sort changes
   useEffect(() => {
     let results = [...businesses];
 
@@ -63,7 +60,6 @@ export default function Browse() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Search bar */}
       <div className="bg-white border-b px-6 py-4">
         <div className="max-w-5xl mx-auto flex gap-3">
           <input
@@ -85,7 +81,6 @@ export default function Browse() {
         </div>
       </div>
 
-      {/* Category tabs */}
       <div className="bg-white border-b px-6 py-3 overflow-x-auto">
         <div className="max-w-5xl mx-auto flex gap-2">
           {CATEGORIES.map((cat) => (
@@ -104,7 +99,6 @@ export default function Browse() {
         </div>
       </div>
 
-      {/* Results */}
       <div className="max-w-5xl mx-auto px-6 py-10">
         <p className="text-gray-500 mb-6">{filtered.length} businesses found</p>
 

@@ -36,11 +36,34 @@ export default function Navbar() {
           <>
             {user ? (
               <div className="flex items-center gap-3">
-                <Link
-                  to="/dashboard"
-                  className="text-gray-600 hover:text-blue-600 text-sm"
-                >
+                <Link to="/dashboard" className="text-gray-600 hover:text-blue-600 text-sm">
                   Dashboard
                 </Link>
                 <div className="flex items-center gap-2 bg-gray-50 border rounded-lg px-3 py-2">
-                  <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm
+                  <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
+                    {user.email[0].toUpperCase()}
+                  </div>
+                  <span className="text-sm text-gray-700 hidden md:block">
+                    {user.email}
+                  </span>
+                  <button onClick={logout} className="text-sm text-red-500 hover:text-red-700 ml-1">
+                    Logout
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <Link to="/login" className="text-gray-600 hover:text-blue-600">
+                  Login
+                </Link>
+                <Link to="/register" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                  List Your Business
+                </Link>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </nav>
+  );
+}
