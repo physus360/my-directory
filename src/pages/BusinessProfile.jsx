@@ -16,6 +16,10 @@ export default function BusinessProfile() {
   const [submitting, setSubmitting] = useState(false);
   const [alreadyReviewed, setAlreadyReviewed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [showContact, setShowContact] = useState(false);
+  const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
+  const [contactSent, setContactSent] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => setUser(u));
@@ -72,6 +76,40 @@ export default function BusinessProfile() {
     setSubmitting(false);
   };
 
+  const shareBusiness = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: business.name,
+          text: `Check out ${business.name} on BizDirectory`,
+          url,
+        });
+      } catch {}
+    } else {
+      navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const submitContact = async (e) => {
+    e.preventDefault();
+    try {
+      await addDoc(collection(db, "contacts"), {
+        businessId: id,
+        businessName: business.name,
+        businessEmail: business.email,
+        ...contactForm,
+        createdAt: Date.now(),
+      });
+      setContactSent(true);
+      setContactForm({ name: "", email: "", message: "" });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-400 text-xl">Loading...</div>;
   if (!business) return <div className="min-h-screen flex items-center justify-center text-gray-400 text-xl">Business not found</div>;
 
@@ -91,16 +129,27 @@ export default function BusinessProfile() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-start justify-between mb-2">
             <h1 className="text-3xl font-bold text-gray-800">{business.name}</h1>
-            <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-sm">{business.category}</span>
+            <div className="flex items-center gap-2">
+              <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-sm">{business.category}</span>
+              <button
+                onClick={shareBusiness}
+                className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-gray-600 transition"
+              >
+                {copied ? "✅ Copied!" : "🔗 Share"}
+              </button>
+            </div>
           </div>
+
           <div className="flex items-center gap-2 mb-4">
             {[1,2,3,4,5].map((s) => (
               <span key={s} className={`text-2xl ${s <= stars ? "text-yellow-400" : "text-gray-200"}`}>★</span>
             ))}
             <span className="text-gray-500">{business.avgRating || 0} ({business.reviewCount || 0} reviews)</span>
           </div>
+
           <p className="text-gray-600 mb-6">{business.description}</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             {business.phone && (
               <a href={`tel:${business.phone}`} className="flex items-center gap-2 bg-gray-50 rounded-lg p-3 hover:bg-gray-100">
                 <span className="text-xl">📞</span>
@@ -111,13 +160,16 @@ export default function BusinessProfile() {
               </a>
             )}
             {business.email && (
-              <a href={`mailto:${business.email}`} className="flex items-center gap-2 bg-gray-50 rounded-lg p-3 hover:bg-gray-100">
+              <button
+                onClick={() => setShowContact(!showContact)}
+                className="flex items-center gap-2 bg-gray-50 rounded-lg p-3 hover:bg-gray-100 text-left"
+              >
                 <span className="text-xl">✉️</span>
                 <div>
                   <div className="text-xs text-gray-400">Email</div>
-                  <div className="font-medium text-gray-700">{business.email}</div>
+                  <div className="font-medium text-gray-700">Send message</div>
                 </div>
-              </a>
+              </button>
             )}
             {business.website && (
               <a href={business.website} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-gray-50 rounded-lg p-3 hover:bg-gray-100">
@@ -129,6 +181,50 @@ export default function BusinessProfile() {
               </a>
             )}
           </div>
+
+          {showContact && (
+            <div className="border rounded-xl p-4 mt-2">
+              <h3 className="font-semibold text-gray-800 mb-3">Send a Message</h3>
+              {contactSent ? (
+                <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg">
+                  Message sent! The business will get back to you.
+                </div>
+              ) : (
+                <form onSubmit={submitContact} className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      className="border rounded-lg px-3 py-2 text-sm"
+                      placeholder="Your name"
+                      value={contactForm.name}
+                      onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                      required
+                    />
+                    <input
+                      type="email"
+                      className="border rounded-lg px-3 py-2 text-sm"
+                      placeholder="Your email"
+                      value={contactForm.email}
+                      onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <textarea
+                    className="w-full border rounded-lg px-3 py-2 h-24 resize-none text-sm"
+                    placeholder="Your message..."
+                    value={contactForm.message}
+                    onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-blue-700"
+                  >
+                    Send Message
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
