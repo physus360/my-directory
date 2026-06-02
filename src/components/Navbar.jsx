@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "../firebase";
 
+const ADMIN_EMAILS = ["physus2020@gmai.com"];
+
 export default function Navbar() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,18 +21,23 @@ export default function Navbar() {
 
   const logout = async () => {
     await signOut(auth);
+    setMenuOpen(false);
     navigate("/");
   };
+
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email);
 
   return (
     <nav className="bg-white shadow-sm px-6 py-4 flex items-center justify-between sticky top-0 z-50">
       <Link to="/" className="text-2xl font-bold text-blue-600">
         BizDirectory
       </Link>
+
       <div className="flex items-center gap-4">
         <Link to="/browse" className="text-gray-600 hover:text-blue-600">
           Browse
         </Link>
+
         {!loading && (
           <>
             {user ? (
@@ -45,6 +52,7 @@ export default function Navbar() {
                   <span className="text-sm text-gray-700 hidden md:block">{user.email}</span>
                   <span className="text-gray-400 text-xs">v</span>
                 </button>
+
                 {menuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white border rounded-xl shadow-lg z-50">
                     <Link
@@ -61,6 +69,15 @@ export default function Navbar() {
                     >
                       My Reviews
                     </Link>
+                    {isAdmin && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setMenuOpen(false)}
+                        className="block px-4 py-2.5 text-sm text-purple-600 hover:bg-gray-50 font-medium"
+                      >
+                        Admin Panel
+                      </Link>
+                    )}
                     <button
                       onClick={logout}
                       className="block w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-gray-50 rounded-b-xl"
