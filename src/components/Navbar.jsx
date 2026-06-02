@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "../firebase";
 
-const ADMIN_EMAILS = ["physus2020@gmai.com"];
+const ADMIN_EMAILS = ["physus2020@gmail.com"];
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
