@@ -1,11 +1,16 @@
 import { Link } from "react-router-dom";
 
 export default function BusinessCard({ business }) {
-  const { id, name, category, description, imageUrl, avgRating, reviewCount, phone } = business;
+  const { id, name, category, description, imageUrl, avgRating, reviewCount, phone, featured, verified } = business;
   const stars = Math.round(avgRating || 0);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
+    <div className={`bg-white rounded-2xl shadow-sm border overflow-hidden hover:shadow-md transition relative ${featured ? "border-yellow-300" : "border-gray-100"}`}>
+      {featured && (
+        <div className="absolute top-3 left-3 z-10 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+          ⭐ Featured
+        </div>
+      )}
       <div className="h-40 bg-gray-100 overflow-hidden">
         {imageUrl ? (
           <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
@@ -15,7 +20,10 @@ export default function BusinessCard({ business }) {
       </div>
       <div className="p-4">
         <div className="flex items-start justify-between mb-1">
-          <h3 className="font-bold text-gray-800 text-lg leading-tight">{name}</h3>
+          <div className="flex items-center gap-1">
+            <h3 className="font-bold text-gray-800 text-lg leading-tight">{name}</h3>
+            {verified && <span title="Verified" className="text-blue-500 text-sm">✅</span>}
+          </div>
           <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full ml-2 whitespace-nowrap">
             {category}
           </span>

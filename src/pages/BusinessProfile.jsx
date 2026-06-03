@@ -113,30 +113,46 @@ export default function BusinessProfile() {
   const mapsUrl = business.address
     ? `https://maps.google.com/maps?q=${encodeURIComponent(business.address)}&output=embed`
     : null;
+  const whatsappUrl = business.whatsapp
+    ? `https://wa.me/${business.whatsapp.replace(/[^0-9]/g, "")}`
+    : null;
+  const instagramUrl = business.instagram
+    ? `https://instagram.com/${business.instagram.replace("@", "")}`
+    : null;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="h-64 bg-gray-200 overflow-hidden">
+      <div className="h-64 bg-gray-200 overflow-hidden relative">
         {business.imageUrl ? (
           <img src={business.imageUrl} alt={business.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-8xl">🏢</div>
+        )}
+        {business.featured && (
+          <div className="absolute top-4 left-4 bg-yellow-400 text-yellow-900 font-bold px-3 py-1 rounded-full text-sm flex items-center gap-1">
+            ⭐ Featured
+          </div>
         )}
       </div>
 
       <div className="max-w-3xl mx-auto px-6 py-10 space-y-6">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-start justify-between mb-2">
-            <h1 className="text-3xl font-bold text-gray-800">{business.name}</h1>
-            <div className="flex items-center gap-2">
-              <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-sm">{business.category}</span>
-              <button onClick={shareBusiness} className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-gray-600 transition">
-                {copied ? "Copied!" : "Share"}
-              </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-3xl font-bold text-gray-800">{business.name}</h1>
+                {business.verified && (
+                  <span title="Verified Business" className="text-blue-500 text-xl">✅</span>
+                )}
+              </div>
+              <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-sm inline-block mt-1">{business.category}</span>
             </div>
+            <button onClick={shareBusiness} className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-gray-600 transition">
+              {copied ? "Copied!" : "🔗 Share"}
+            </button>
           </div>
 
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 my-4">
             {[1,2,3,4,5].map((s) => (
               <span key={s} className={`text-2xl ${s <= stars ? "text-yellow-400" : "text-gray-200"}`}>★</span>
             ))}
@@ -147,18 +163,17 @@ export default function BusinessProfile() {
 
           {business.address && (
             <div className="flex items-center gap-2 text-gray-600 mb-4 text-sm">
-              <span>📍</span>
-              <span>{business.address}</span>
+              <span>📍</span><span>{business.address}</span>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
             {business.phone && (
               <a href={`tel:${business.phone}`} className="flex items-center gap-2 bg-gray-50 rounded-lg p-3 hover:bg-gray-100">
                 <span className="text-xl">📞</span>
                 <div>
                   <div className="text-xs text-gray-400">Phone</div>
-                  <div className="font-medium text-gray-700">{business.phone}</div>
+                  <div className="font-medium text-gray-700 text-sm">{business.phone}</div>
                 </div>
               </a>
             )}
@@ -167,7 +182,7 @@ export default function BusinessProfile() {
                 <span className="text-xl">✉️</span>
                 <div>
                   <div className="text-xs text-gray-400">Email</div>
-                  <div className="font-medium text-gray-700">Send message</div>
+                  <div className="font-medium text-gray-700 text-sm">Send message</div>
                 </div>
               </button>
             )}
@@ -176,14 +191,34 @@ export default function BusinessProfile() {
                 <span className="text-xl">🌐</span>
                 <div>
                   <div className="text-xs text-gray-400">Website</div>
-                  <div className="font-medium text-gray-700">Visit website</div>
+                  <div className="font-medium text-gray-700 text-sm">Visit website</div>
                 </div>
               </a>
             )}
           </div>
 
+          {(whatsappUrl || instagramUrl || business.facebook) && (
+            <div className="flex gap-3 mt-2">
+              {whatsappUrl && (
+                <a href={whatsappUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-lg hover:bg-green-100 text-sm font-medium">
+                  💬 WhatsApp
+                </a>
+              )}
+              {instagramUrl && (
+                <a href={instagramUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-pink-50 text-pink-700 px-4 py-2 rounded-lg hover:bg-pink-100 text-sm font-medium">
+                  📸 Instagram
+                </a>
+              )}
+              {business.facebook && (
+                <a href={business.facebook} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-100 text-sm font-medium">
+                  👥 Facebook
+                </a>
+              )}
+            </div>
+          )}
+
           {showContact && (
-            <div className="border rounded-xl p-4 mt-2">
+            <div className="border rounded-xl p-4 mt-4">
               <h3 className="font-semibold text-gray-800 mb-3">Send a Message</h3>
               {contactSent ? (
                 <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg">
@@ -207,15 +242,7 @@ export default function BusinessProfile() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Location</h2>
             <div className="rounded-xl overflow-hidden h-64">
-              <iframe
-                title="Business Location"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                src={mapsUrl}
-                allowFullScreen
-                loading="lazy"
-              />
+              <iframe title="Business Location" width="100%" height="100%" style={{ border: 0 }} src={mapsUrl} allowFullScreen loading="lazy" />
             </div>
             <p className="text-sm text-gray-500 mt-2">📍 {business.address}</p>
           </div>

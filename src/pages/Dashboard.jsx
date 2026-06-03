@@ -18,6 +18,7 @@ export default function Dashboard() {
   const [form, setForm] = useState({
     name: "", category: "Technology", description: "",
     phone: "", email: "", website: "", imageUrl: "", address: "",
+    whatsapp: "", instagram: "", facebook: "",
   });
   const navigate = useNavigate();
 
@@ -39,11 +40,13 @@ export default function Dashboard() {
           website: existing.website || "",
           imageUrl: existing.imageUrl || "",
           address: existing.address || "",
+          whatsapp: existing.whatsapp || "",
+          instagram: existing.instagram || "",
+          facebook: existing.facebook || "",
         });
         const rq = query(collection(db, "reviews"), where("businessId", "==", existing.id));
         const rSnap = await getDocs(rq);
         setReviews(rSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
-
         const cq = query(collection(db, "contacts"), where("businessId", "==", existing.id));
         const cSnap = await getDocs(cq);
         setContacts(cSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
@@ -64,6 +67,8 @@ export default function Dashboard() {
           updatedAt: Date.now(),
           avgRating: business.avgRating || 0,
           reviewCount: business.reviewCount || 0,
+          featured: business.featured || false,
+          verified: business.verified || false,
         });
       } else {
         const ref = await addDoc(collection(db, "businesses"), {
@@ -72,6 +77,8 @@ export default function Dashboard() {
           createdAt: Date.now(),
           avgRating: 0,
           reviewCount: 0,
+          featured: false,
+          verified: false,
         });
         setBusiness({ id: ref.id, ...form });
       }
@@ -134,9 +141,7 @@ export default function Dashboard() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${
-                activeTab === tab
-                  ? "bg-blue-600 text-white"
-                  : "bg-white border text-gray-600 hover:bg-gray-50"
+                activeTab === tab ? "bg-blue-600 text-white" : "bg-white border text-gray-600 hover:bg-gray-50"
               }`}
             >
               {tab === "listing" ? "My Listing" : tab === "reviews" ? `Reviews (${reviews.length})` : `Messages (${contacts.length})`}
@@ -152,6 +157,16 @@ export default function Dashboard() {
             {saved && (
               <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg mb-4">
                 Changes saved successfully!
+              </div>
+            )}
+            {business?.featured && (
+              <div className="bg-yellow-50 text-yellow-700 px-4 py-3 rounded-lg mb-4 flex items-center gap-2">
+                <span>⭐</span> Your listing is Featured!
+              </div>
+            )}
+            {business?.verified && (
+              <div className="bg-blue-50 text-blue-700 px-4 py-3 rounded-lg mb-4 flex items-center gap-2">
+                <span>✅</span> Your listing is Verified!
               </div>
             )}
             <form onSubmit={save} className="space-y-4">
@@ -172,7 +187,7 @@ export default function Dashboard() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm font-medium text-gray-700 mb-1">Phone</div>
-                  <input className="w-full border rounded-lg px-3 py-2" placeholder="+1 234 567 8900" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                  <input className="w-full border rounded-lg px-3 py-2" placeholder="+960 123 4567" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                 </div>
                 <div>
                   <div className="text-sm font-medium text-gray-700 mb-1">Email</div>
@@ -185,9 +200,27 @@ export default function Dashboard() {
               </div>
               <div>
                 <div className="text-sm font-medium text-gray-700 mb-1">Address</div>
-                <input className="w-full border rounded-lg px-3 py-2" placeholder="123 Main St, City, Country" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-                <p className="text-xs text-gray-400 mt-1">This will show a Google Maps embed on your listing</p>
+                <input className="w-full border rounded-lg px-3 py-2" placeholder="Male, Maldives" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
               </div>
+
+              <div className="border-t pt-4">
+                <div className="text-sm font-semibold text-gray-700 mb-3">Social Media</div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl w-8">💬</span>
+                    <input className="w-full border rounded-lg px-3 py-2" placeholder="WhatsApp number e.g. +9607654321" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl w-8">📸</span>
+                    <input className="w-full border rounded-lg px-3 py-2" placeholder="Instagram username e.g. mybusiness" value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl w-8">👥</span>
+                    <input className="w-full border rounded-lg px-3 py-2" placeholder="Facebook page URL" value={form.facebook} onChange={(e) => setForm({ ...form, facebook: e.target.value })} />
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <div className="text-sm font-medium text-gray-700 mb-1">Logo / Image URL</div>
                 <input className="w-full border rounded-lg px-3 py-2" placeholder="https://example.com/logo.png" value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} />
