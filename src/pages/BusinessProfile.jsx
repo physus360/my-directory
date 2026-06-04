@@ -8,6 +8,7 @@ export default function BusinessProfile() {
   const { id } = useParams();
   const [business, setBusiness] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [replies, setReplies] = useState({});
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [rating, setRating] = useState(0);
@@ -20,6 +21,9 @@ export default function BusinessProfile() {
   const [showContact, setShowContact] = useState(false);
   const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
   const [contactSent, setContactSent] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [submittingReply, setSubmittingReply] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => setUser(u));
@@ -31,9 +35,21 @@ export default function BusinessProfile() {
       setLoading(true);
       const snap = await getDoc(doc(db, "businesses", id));
       if (snap.exists()) setBusiness({ id: snap.id, ...snap.data() });
+
       const q = query(collection(db, "reviews"), where("businessId", "==", id));
       const rSnap = await getDocs(q);
-      setReviews(rSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      const reviewList = rSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setReviews(reviewList);
+
+      const repliesMap = {};
+      for (const r of reviewList) {
+        const rq = query(collection(db, "replies"), where("reviewId", "==", r.id));
+        const rpSnap = await getDocs(rq);
+        if (!rpSnap.empty) {
+          repliesMap[r.id] = { id: rpSnap.docs[0].id, ...rpSnap.docs[0].data() };
+        }
+      }
+      setReplies(repliesMap);
       setLoading(false);
     };
     load();
@@ -44,6 +60,8 @@ export default function BusinessProfile() {
       setAlreadyReviewed(reviews.some((r) => r.userId === user.uid));
     }
   }, [user, reviews]);
+
+  const isOwner = user && business && user.uid === business.ownerId;
 
   const submitReview = async (e) => {
     e.preventDefault();
@@ -74,6 +92,30 @@ export default function BusinessProfile() {
       console.error(err);
     }
     setSubmitting(false);
+  };
+
+  const submitReply = async (reviewId) => {
+    if (!replyText.trim()) return;
+    setSubmittingReply(true);
+    try {
+      const ref = await addDoc(collection(db, "replies"), {
+        reviewId,
+        businessId: id,
+        ownerId: user.uid,
+        ownerName: business.name,
+        text: replyText,
+        createdAt: Date.now(),
+      });
+      setReplies((prev) => ({
+        ...prev,
+        [reviewId]: { id: ref.id, text: replyText, ownerName: business.name, createdAt: Date.now() },
+      }));
+      setReplyingTo(null);
+      setReplyText("");
+    } catch (err) {
+      console.error(err);
+    }
+    setSubmittingReply(false);
   };
 
   const shareBusiness = async () => {
@@ -141,9 +183,7 @@ export default function BusinessProfile() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-3xl font-bold text-gray-800">{business.name}</h1>
-                {business.verified && (
-                  <span title="Verified Business" className="text-blue-500 text-xl">✅</span>
-                )}
+                {business.verified && <span title="Verified Business" className="text-blue-500 text-xl">✅</span>}
               </div>
               <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-sm inline-block mt-1">{business.category}</span>
             </div>
@@ -198,7 +238,7 @@ export default function BusinessProfile() {
           </div>
 
           {(whatsappUrl || instagramUrl || business.facebook) && (
-            <div className="flex gap-3 mt-2">
+            <div className="flex gap-3 mt-2 flex-wrap">
               {whatsappUrl && (
                 <a href={whatsappUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-lg hover:bg-green-100 text-sm font-medium">
                   💬 WhatsApp
@@ -221,9 +261,7 @@ export default function BusinessProfile() {
             <div className="border rounded-xl p-4 mt-4">
               <h3 className="font-semibold text-gray-800 mb-3">Send a Message</h3>
               {contactSent ? (
-                <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg">
-                  Message sent! The business will get back to you.
-                </div>
+                <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg">Message sent! The business will get back to you.</div>
               ) : (
                 <form onSubmit={submitContact} className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
@@ -255,9 +293,7 @@ export default function BusinessProfile() {
               <a href="/login" className="text-blue-600 hover:underline">Sign in</a> to leave a review
             </div>
           ) : alreadyReviewed || submitted ? (
-            <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg">
-              You have already reviewed this business. Thank you!
-            </div>
+            <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg">You have already reviewed this business. Thank you!</div>
           ) : (
             <form onSubmit={submitReview} className="space-y-4">
               <div>
@@ -284,9 +320,9 @@ export default function BusinessProfile() {
           {reviews.length === 0 ? (
             <div className="text-gray-400">No reviews yet. Be the first!</div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {reviews.map((r, i) => (
-                <div key={i} className="border-b last:border-b-0 pb-4 last:pb-0">
+                <div key={i} className="border-b last:border-b-0 pb-6 last:pb-0">
                   <div className="flex items-center justify-between mb-1">
                     <div className="font-medium text-gray-700">{r.userName}</div>
                     <div className="text-sm text-gray-400">{new Date(r.createdAt).toLocaleDateString()}</div>
@@ -297,6 +333,53 @@ export default function BusinessProfile() {
                     ))}
                   </div>
                   {r.comment && <p className="text-gray-600 text-sm">{r.comment}</p>}
+
+                  {replies[r.id] && (
+                    <div className="mt-3 ml-4 bg-blue-50 rounded-xl p-3 border-l-4 border-blue-400">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-bold text-blue-700">Owner Reply</span>
+                        <span className="text-xs text-gray-400">{new Date(replies[r.id].createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <p className="text-sm text-gray-700">{replies[r.id].text}</p>
+                    </div>
+                  )}
+
+                  {isOwner && !replies[r.id] && (
+                    <div className="mt-2">
+                      {replyingTo === r.id ? (
+                        <div className="space-y-2">
+                          <textarea
+                            className="w-full border rounded-lg px-3 py-2 h-20 resize-none text-sm"
+                            placeholder="Write your reply..."
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => submitReply(r.id)}
+                              disabled={submittingReply}
+                              className="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                            >
+                              {submittingReply ? "Posting..." : "Post Reply"}
+                            </button>
+                            <button
+                              onClick={() => { setReplyingTo(null); setReplyText(""); }}
+                              className="px-4 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setReplyingTo(r.id)}
+                          className="text-sm text-blue-600 hover:underline mt-1"
+                        >
+                          Reply to this review
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
